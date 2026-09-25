@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if false; // Safeguard user accounts from deletion via client
+    }
+
+    // Articles & Literature
+    match /articles/{articleId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.authorId == request.auth.uid ||
+        // Allow updating likes count or views count
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount', 'views', 'bookmarksCount'])
+      );
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // Forum / Community Discussions
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAuthenticated() && (
+        resource.data.authorId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'repliesCount'])
+      );
+      allow delete: if isAuthenticated() && resource.data.authorId == request.auth.uid;
+
+      // Post replies
+      match /replies/{replyId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+    // Likes & Bookmarks (individual user states)
+    match /users/{userId}/likes/{articleId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    match /users/{userId}/bookmarks/{articleId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

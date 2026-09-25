@@ -1,0 +1,11 @@
+{
+  "name": "tamilcholai-parent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tamilcholai project root helper scripts",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "install:frontend": "npm --prefix frontend install"
+  }
+}
