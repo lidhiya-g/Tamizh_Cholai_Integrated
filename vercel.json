@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "tamilcholai/frontend",
+      "framework": "vite"
+    },
+    "client": {
+      "root": "tamizh-cholai/client",
+      "framework": "vite"
+    },
+    "server": {
+      "root": "tamizh-cholai/server",
+      "framework": "express"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "server"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
+}
